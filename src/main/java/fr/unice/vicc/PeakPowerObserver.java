@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class PeakPowerObserver extends SimEntity {
 
-    /** The custom event id, must be unique. */
+    /** The event id, must be unique. */
     public static final int OBSERVE = 728078;
 
     private List<PowerHost> hosts;
@@ -49,17 +49,11 @@ public class PeakPowerObserver extends SimEntity {
         return p;
     }
 
-    /*
-    * This is the central method to implement.
-    * CloudSim is event-based.
-    * This method is called when there is an event to deal in that object.
-    * In practice: create a custom event (here it is called OBSERVE) with a unique int value and deal with it.
-     */
     @Override
     public void processEvent(SimEvent ev) {
         //I received an event
         switch(ev.getTag()) {
-            case OBSERVE: //It is my custom event
+            case OBSERVE:
                 //I must observe the datacenter
                 double cur = getPower();
                 if (cur > peak) {
@@ -91,8 +85,4 @@ public class PeakPowerObserver extends SimEntity {
         send(this.getId(), delay, OBSERVE, null);
     }
 
-    @Override
-    public int getId() {
-        return OBSERVE;
-    }
 }

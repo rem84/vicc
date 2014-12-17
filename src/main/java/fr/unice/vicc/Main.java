@@ -61,10 +61,9 @@ public class Main {
 
         //Here you can insert your observers
         PeakPowerObserver peakPowerObserver = new PeakPowerObserver(hosts);
-        
         observers.build(hosts);
 
-        double x = CloudSim.startSimulation();
+        CloudSim.startSimulation();
 
         List<Cloudlet> newList = broker.getCloudletReceivedList();
         Log.printLine("Received " + newList.size() + " cloudlets");
@@ -74,7 +73,7 @@ public class Main {
         return new Revenue(peakPowerObserver, datacenter);
     }
 
-    public static void main(String [] args) {
+    public static void main(String [] args) throws Exception {
         CumulatedRevenue revenues = new CumulatedRevenue();
         if (args.length < 1) {
             quit("Usage: Main --scheduler [day]");
@@ -88,27 +87,18 @@ public class Main {
                 quit(WORKLOAD + " is not a folder");
             }
             for (File f : input.listFiles()) {
-                try {
-                    System.out.println("Day " + f.getName());
-                    Revenue r = simulateDay(f.getName(), policy);
-                    System.out.println(r);
-                    revenues.add(r);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                System.out.println("Day " + f.getName());
+                Revenue r = simulateDay(f.getName(), policy);
+                System.out.println(r);
+                revenues.add(r);
             }
 
         } else {
             //a single day
-            try {
-                Revenue r = simulateDay(args[1], policy);
-                System.out.println(r);
-                revenues.add(r);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            Revenue r = simulateDay(args[1], policy);
+            System.out.println(r);
+            revenues.add(r);
         }
-        System.err.println("hop");
         System.out.println(revenues);
     }
 

@@ -5,17 +5,17 @@ import java.util.List;
 
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Log;
+import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.power.PowerHost;
 
 public class AntiAffinityObserver extends SimEntity {
 	/** The custom event id, must be unique. */
-	public static final int OBSERVE = 953248;
+	public static final int OBSERVE = 18;
 
 	private List<PowerHost> hosts;
-
-	private boolean antiAffinity;
+    private ArrayList<Host>plageListError;
 
 	private float delay;
 
@@ -31,28 +31,41 @@ public class AntiAffinityObserver extends SimEntity {
 		this.delay = delay;
 	}
 
-	public void checkPresenceVm()
+	public void checkAntiAffinity()
     {
-    	boolean ret =false;
-    	List <Integer> plageList = new ArrayList<>();
-    	
-        for(int j=0;j<hosts.size();j++)
-    	for(int i=0;i<hosts.get(j).getVmList().size();i++)
-    	{
-    		int plage = getPlageByVmId(hosts.get(j).getVmList().get(i).getId());
-    		for(int a=0;a<plageList.size();a++)
-			{
-				if(plage==plageList.get(a).intValue())
-				{
-					System.err.println("Error :  anti-affinity detected / id vm : "+hosts.get(j).getVmList().get(i).getId()+", host id : "+hosts.get(j).getId());
-					break;
+    	this.plageListError = new ArrayList<Host>();
+    	boolean presence = true;
+    	for(Host host : hosts){
+    		if(!host.getVmList().isEmpty()) {
+		    	for(int i=0;i<host.getVmList().size();i++)
+		    	{
+		    		Vm vm1 = host.getVmList().get(i);
+		    		for(Vm vm2 : host.getVmList())
+		    		{
+	   					if(!(vm1.equals(vm2)) && (!checkPresenceVm(vm1,vm2))) {
+	   						System.out.println("Comparaison - vm1 : " + vm1.getId() + " - vm2 : " + vm2.getId());
+	   						presence = false;
+	   					}
+	   				}
 				}
-				else
-				{
-					plageList.add(plage);
+				if(!presence) {
+					plageListError.add(host);
+						TraiteListError(plageListError);
+						System.out.println("Erreur");
 				}
+    		}
+    		else {
+				System.out.println("Host sans vm (hostId : "+ host.getId()+")");
 			}
     	}
+    }
+	
+	public boolean checkPresenceVm(Vm vm1, Vm vm2)
+    {
+    		if(getPlageByVmId(vm1.getId()) == (getPlageByVmId(vm2.getId())))
+    			return true;
+    		else 
+    			return false;
     }
 
 	public int getPlageByVmId(int idVm) {
@@ -61,33 +74,27 @@ public class AntiAffinityObserver extends SimEntity {
 		plage *= 100;
 		return plage;
 	}
+	
+	private void TraiteListError(ArrayList<Host> list) {
+		for(Host host : list) {
+			Log.printLine("Error host : " + host.getId());
+			for(Vm vm : host.getVmList()) {
+				Log.printLine("Detail erreur : vm : " + vm.getId() + " host : " + host.getId());
+			}
+		}
+	}
 
-	/*
-	 * This is the central method to implement. CloudSim is event-based. This
-	 * method is called when there is an event to deal in that object. In
-	 * practice: create a custom event (here it is called OBSERVE) with a unique
-	 * int value and deal with it.
-	 */
+	
 	@Override
 	public void processEvent(SimEvent ev) {
 		// I received an event
 		switch (ev.getTag()) {
-		case OBSERVE: // It is my custom event
-			// I must observe the datacenter
-			/*antiAffinity = */checkPresenceVm();
-			// Observation loop, re-observe in `delay` seconds
-			send(this.getId(), delay, OBSERVE, null);
-		}
+		case OBSERVE: 
+			checkAntiAffinity();
+		//}
+			send(this.getId(), delay, OBSERVE, null);}
 	}
 
-	/**
-	 * Get the peak power consumption.
-	 * 
-	 * @return a number of Watts
-	 */
-	/*public double getPeak() {
-		return peak;
-	}*/
 
 	@Override
 	public void shutdownEntity() {
@@ -97,9 +104,6 @@ public class AntiAffinityObserver extends SimEntity {
 	@Override
 	public void startEntity() {
 		Log.printLine(getName() + " is starting...");
-		// I send to myself an event that will be processed in `delay` second by
-		// the method
-		// `processEvent`
 		send(this.getId(), delay, OBSERVE, null);
 	}
 

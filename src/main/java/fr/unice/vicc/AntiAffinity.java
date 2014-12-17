@@ -1,64 +1,46 @@
 package fr.unice.vicc;
 
 import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.HostStateHistoryEntry;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.VmAllocationPolicy;
+import org.cloudbus.cloudsim.power.PowerHost;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class AntiAffinity extends VmAllocationPolicy {
-
-    //To track the Host for each Vm. The string is the unique Vm identifier, composed by its id and its userId
-    private Map<String, Host> vmTable;
-
-    public AntiAffinity(List<? extends Host> list) {
-        super(list);
-        vmTable = new HashMap<>();
+		
+	public AntiAffinity(List<PowerHost> list) {
+		super(list);
+		new LinkedHashMap<Host, Vm>();
+	}
+	
+	@Override
+	public boolean allocateHostForVm(Vm vm) {
+        boolean presence = true;
+		for(Host h : getHostList()) {
+			/*if(h.getVmList().size() > 0) {
+				for(Vm vmTmp : h.getVmList()) {
+					presence = checkPresenceVm(vmTmp, vm);
+				}
+				if(!presence) {
+					if(h.vmCreate(vm)) {
+						System.out.println("host ID : " + h.getId() + " vm ID : " + vm.getId());
+						return true;
+					}
+				}
+			} else {*/
+				if(h.vmCreate(vm)) {
+					System.out.println("host ID : " + h.getId() + " vm ID : " + vm.getId());
+					return true;
+				}
+			}
+		//}
+		return false;
     }
-
-    public Host getHost(Vm vm) {
-        // We must recover the Host which hosting Vm
-        return this.vmTable.get(vm.getUid());
-    }
-
-    public Host getHost(int vmId, int userId) {
-        // We must recover the Host which hosting Vm
-        return this.vmTable.get(Vm.getUid(userId, vmId));
-    }
-
-    public boolean allocateHostForVm(Vm vm, Host host) {
-        if (host.vmCreate(vm)) {
-            //the host is appropriate, we track it
-            vmTable.put(vm.getUid(), host);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean allocateHostForVm(Vm vm) {
-        //First fit algorithm, run on the first suitable node
-    	//System.out.println("vm.getUid() : "+vm.getUid()+" plage : "+getPlageByVmId(vm.getId()));
-    	
-    	int plageVm = getPlageByVmId(vm.getId());
-        for (Host h : getHostList()) {
-        	if(!checkPresenceVm(h,plageVm))
-        	{
-				if (h.vmCreate(vm)) 
-				{
-	                //track the host
-					vmTable.put(vm.getUid(), h);
-					System.out.println("vm.getUid() : "+vm.getUid()+" host : "+h.getId());
-	                return true;
-	            }
-        	}
-        }
-        return false;
-    }
-    
-    public int getPlageByVmId(int idVm)
+	
+	public int getPlageByVmId(int idVm)
     {
     	int plage;
     	plage = idVm/100;
@@ -66,37 +48,46 @@ public class AntiAffinity extends VmAllocationPolicy {
     	return plage;
     }
     
-    public boolean checkPresenceVm(Host h, int plage)
+    public boolean checkPresenceVm(Vm vm1, Vm vm2)
     {
-    	boolean ret =false;
-    	for(int i=0;i<h.getVmList().size();i++)
-    	{
-    		if(h.getVmList().get(i).getId()>=plage && h.getVmList().get(i).getId()<(plage+100))
-    			ret = true;
-    		else
-    			ret = false;
-    	}
-		return ret;
+    		if(getPlageByVmId(vm1.getId()) == (getPlageByVmId(vm2.getId())))
+    			return true;
+    		else 
+    			return false;
     }
 
-    public void deallocateHostForVm(Vm vm,Host host) {
-        vmTable.remove(vm.getUid());
-        host.vmDestroy(vm);
-    }
+	@Override
+	public boolean allocateHostForVm(Vm vm, Host host) {
+		if(host.vmCreate(vm)) {
+			return true;
+		}
+		return false;
+	}
 
-    @Override
-    public void deallocateHostForVm(Vm v) {
-        //get the host and remove the vm
-        vmTable.get(v.getUid()).vmDestroy(v);
-    }
+	@Override
+	public void deallocateHostForVm(Vm vm) {
+		vm.getHost().deallocatePesForVm(vm);
+	}
 
-    public static Object optimizeAllocation() {
-        return null;
-    }
+	@Override
+	public Host getHost(Vm vm) {
+		return vm.getHost();
+	}
 
-    @Override
-    public List<Map<String, Object>> optimizeAllocation(List<? extends Vm> arg0) {
-        //Static scheduling, no migration, return null;
-        return null;
-    }
+	@Override
+	public Host getHost(int vmID, int userID) {
+		for(Host host : getHostList()) {
+			if(host.getVm(vmID, userID) != null) {
+				return host;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public List<Map<String, Object>> optimizeAllocation(List<? extends Vm> arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
