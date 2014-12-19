@@ -10,6 +10,10 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.power.PowerHost;
 
+/**
+ * @author Baazaoui Adonis / Duran Rémy
+ */
+
 public class AntiAffinityObserver extends SimEntity {
 	/** The custom event id, must be unique. */
 	public static final int OBSERVE = 18;
@@ -43,15 +47,14 @@ public class AntiAffinityObserver extends SimEntity {
 		    		for(Vm vm2 : host.getVmList())
 		    		{
 	   					if(!(vm1.equals(vm2)) && (!checkPresenceVm(vm1,vm2))) {
-	   						System.out.println("Comparaison - vm1 : " + vm1.getId() + " - vm2 : " + vm2.getId());
 	   						presence = false;
 	   					}
 	   				}
 				}
 				if(!presence) {
 					plageListError.add(host);
-						TraiteListError(plageListError);
-						System.out.println("Erreur");
+					TraiteListError(plageListError);
+					System.out.println("Erreur");
 				}
     		}
     		else {
@@ -79,7 +82,7 @@ public class AntiAffinityObserver extends SimEntity {
 		for(Host host : list) {
 			Log.printLine("Error host : " + host.getId());
 			for(Vm vm : host.getVmList()) {
-				Log.printLine("Detail erreur : vm : " + vm.getId() + " host : " + host.getId());
+				Log.printLine("Detail erreur (vm : " + vm.getId() + "| host : " + host.getId()+")");
 			}
 		}
 	}

@@ -9,6 +9,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Baazaoui Adonis / Duran Rémy
+ */
+
 public class AntiAffinity extends VmAllocationPolicy {
 		
 	public AntiAffinity(List<PowerHost> list) {
@@ -20,25 +24,28 @@ public class AntiAffinity extends VmAllocationPolicy {
 	public boolean allocateHostForVm(Vm vm) {
         boolean presence = true;
 		for(Host h : getHostList()) {
-			/*if(h.getVmList().size() > 0) {
+			if(h.getVmList().size() > 0) {
 				for(Vm vmTmp : h.getVmList()) {
 					presence = checkPresenceVm(vmTmp, vm);
 				}
 				if(!presence) {
-					if(h.vmCreate(vm)) {
-						System.out.println("host ID : " + h.getId() + " vm ID : " + vm.getId());
-						return true;
-					}
+					return allocateVm(vm, h);
 				}
-			} else {*/
-				if(h.vmCreate(vm)) {
-					System.out.println("host ID : " + h.getId() + " vm ID : " + vm.getId());
-					return true;
-				}
+			} else {
+				return allocateVm(vm, h);
 			}
-		//}
+		}
 		return false;
     }
+	
+	private boolean allocateVm(Vm vm, Host h)
+	{
+		if(h.vmCreate(vm)){
+			System.out.println("host ID : " + h.getId() + " vm ID : " + vm.getId());
+			return true;
+		}
+		return false;
+	}
 	
 	public int getPlageByVmId(int idVm)
     {
